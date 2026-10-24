@@ -3,6 +3,17 @@
 **A safe, explainable security auditor for AI-generated web applications.**  
 Built for Tech Yuva × GDG Gurugram Build-A-Thon 2026 (Problem Statement PS-12).
 
+[![GitHub Repo](https://img.shields.io/badge/GitHub-Adhyyan6712%2FVibeAudit-blue?logo=github)](https://github.com/Adhyyan6712/VibeAudit)
+[![Tests Passing](https://img.shields.io/badge/Tests-26%2F26%20Passed-brightgreen)](https://github.com/Adhyyan6712/VibeAudit)
+[![Gemini AI](https://img.shields.io/badge/Powered%20By-Google%20Gemini%202.5-orange?logo=google)](https://aistudio.google.com/)
+
+---
+
+### 🌐 Quick Links & Live Showcase
+- **GitHub Repository**: [https://github.com/Adhyyan6712/VibeAudit](https://github.com/Adhyyan6712/VibeAudit)
+- **Live Demo Link**: [https://every-singers-camp.loca.lt](https://every-singers-camp.loca.lt) *(Password if prompted: `121.244.146.154`)*
+- **Local Application Link**: `http://127.0.0.1:8000`
+
 ---
 
 ## 1. Overview
