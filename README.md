@@ -11,7 +11,8 @@ Built for Tech Yuva × GDG Gurugram Build-A-Thon 2026 (Problem Statement PS-12).
 
 ### 🌐 Quick Links & Live Showcase
 - **GitHub Repository**: [https://github.com/Adhyyan6712/VibeAudit](https://github.com/Adhyyan6712/VibeAudit)
-- **Live Demo Link**: [https://every-singers-camp.loca.lt](https://every-singers-camp.loca.lt) *(Password if prompted: `121.244.146.154`)*
+- **GitHub Pages Live App**: [https://adhyyan6712.github.io/VibeAudit/](https://adhyyan6712.github.io/VibeAudit/)
+- **Live Tunnel Demo Link**: [https://every-singers-camp.loca.lt](https://every-singers-camp.loca.lt) *(Password if prompted: `121.244.146.154`)*
 - **Local Application Link**: `http://127.0.0.1:8000`
 
 ---
