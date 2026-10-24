@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VibeAudit - Safe AI Application Security Auditor</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+
+<body>
+
+    <!-- Header -->
+    <header class="app-header">
+        <div class="brand" id="brand-link">
+            <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                <path d="m9 12 2 2 4-4" />
+            </svg>
+            <span>VibeAudit</span>
+        </div>
+
+        <div id="header-right-start" class="header-notice">
+            Authorized, non-destructive scans only
+        </div>
+
+        <div id="header-right-dashboard" class="header-actions" style="display: none;">
+            <button class="btn btn-outline" id="btn-live-check">Live check</button>
+            <button class="btn btn-outline" id="btn-open-rescan">Re-scan</button>
+            <button class="btn btn-primary" id="btn-export-dropdown">Export report</button>
+        </div>
+    </header>
+
+    <main class="container">
+
+        <!-- =========================================================
+             SCREEN 1: Start Screen
+             ========================================================= -->
+        <section id="view-start" class="view active">
+            <div class="start-hero">
+                <h1>Audit an AI-generated app before you ship it</h1>
+                <p>Upload your project. VibeAudit finds common security mistakes, shows the evidence, and suggests a
+                    fix. A human always makes the final call.</p>
+            </div>
+
+            <div class="start-card">
+                <form id="scan-form">
+                    <div class="dropzone" id="dropzone">
+                        <div class="dropzone-title" id="dropzone-text">Drop your project Folder, File, or ZIP here</div>
+                        <div class="dropzone-sub">Upload any folder, code file, or ZIP archive. Your code is read, never
+                            run.</div>
+                        <div style="display:flex; justify-content:center; gap:0.5rem; flex-wrap:wrap;">
+                            <button type="button" class="btn btn-outline" id="btn-choose-file">Choose File(s) /
+                                ZIP</button>
+                            <button type="button" class="btn btn-outline" id="btn-choose-folder">Choose Folder</button>
+                        </div>
+                        <input type="file" id="file-input" name="file" multiple style="display: none;">
+                        <input type="file" id="folder-input" name="files" webkitdirectory directory multiple
+                            style="display: none;">
+
+                        <div class="quick-samples">
+                            <span>Or test built-in sample:</span>
+                            <button type="button" class="quick-sample-btn" id="btn-sample-vulnerable">TaskBoard
+                                (vulnerable)</button>
+                            <span>|</span>
+                            <button type="button" class="quick-sample-btn" id="btn-sample-fixed">TaskBoard
+                                (fixed)</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="website-url-input">Inspect live website / web application URL</label>
+                        <div style="display: flex; gap: 8px;">
+                            <input type="text" id="website-url-input" name="website_url" class="form-input"
+                                placeholder="e.g. https://www.gla.ac.in, http://127.0.0.1:8000, or http://localhost:5000" style="flex: 1;">
+                            <button type="button" class="btn btn-primary" id="btn-scan-url" style="white-space: nowrap; font-weight: 600;">Scan URL</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="folder-path-input">Or local project folder path (Full access)</label>
+                        <div style="display: flex; gap: 8px;">
+                            <input type="text" id="folder-path-input" name="folder_path" class="form-input"
+                                placeholder="e.g. C:\path\to\my-flask-project or ./demo_apps/taskboard" style="flex: 1;">
+                            <button type="button" class="btn btn-outline" id="btn-scan-folder" style="white-space: nowrap; font-weight: 600;">Scan Path</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="project-name">Project name</label>
+                        <input type="text" id="project-name" name="project_name" class="form-input" value="TaskBoard">
+                    </div>
+
+                    <label class="consent-box" for="consent-checkbox">
+                        <input type="checkbox" id="consent-checkbox" name="consent">
+                        <span class="consent-text">I own this application or am authorized to test it.</span>
+                    </label>
+
+                    <button type="submit" class="btn btn-primary btn-full" id="btn-start-scan" disabled>
+                        Start scan
+                    </button>
+                </form>
+            </div>
+
+            <div class="footer-pills">
+                <div class="footer-pill-item">
+                    <span>🔒 Secrets are masked</span>
+                </div>
+                <div class="footer-pill-item">
+                    <span>🏠 Live checks: localhost only</span>
+                </div>
+                <div class="footer-pill-item">
+                    <span>🛡️ GET and HEAD requests only</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- =========================================================
+             SCREEN 2: Dashboard Screen
+             ========================================================= -->
+        <section id="view-dashboard" class="view">
+            <div class="dashboard-grid">
+
+                <!-- Left Score Card -->
+                <aside class="score-card">
+                    <div class="score-gauge-wrap">
+                        <svg class="score-gauge-svg" width="130" height="130" viewBox="0 0 100 100">
+                            <circle class="gauge-bg" cx="50" cy="50" r="42" />
+                            <circle class="gauge-fill" id="gauge-circle" cx="50" cy="50" r="42"
+                                stroke-dasharray="263.89" stroke-dashoffset="174.16" />
+                        </svg>
+                        <div class="score-center-text">
+                            <span class="score-num" id="score-display">34</span>
+                            <span class="score-denom">out of 100</span>
+                        </div>
+                    </div>
+
+                    <div class="score-title" id="score-label-display">Security score: Poor</div>
+                    <a class="score-link" id="link-how-scored">How is this scored?</a>
+
+                    <div class="severity-counts-grid">
+                        <div class="sev-mini-card critical">
+                            <div class="sev-mini-num" id="count-critical">2</div>
+                            <div class="sev-mini-label">Critical</div>
+                        </div>
+                        <div class="sev-mini-card high">
+                            <div class="sev-mini-num" id="count-high">3</div>
+                            <div class="sev-mini-label">High</div>
+                        </div>
+                        <div class="sev-mini-card medium">
+                            <div class="sev-mini-num" id="count-medium">3</div>
+                            <div class="sev-mini-label">Medium</div>
+                        </div>
+                        <div class="sev-mini-card low">
+                            <div class="sev-mini-num" id="count-low">1</div>
+                            <div class="sev-mini-label">Low</div>
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- Right Findings & Endpoints Table -->
+                <main class="dashboard-content-card">
+                    <div class="tab-nav">
+                        <button class="tab-btn active" id="tab-findings">Findings (9)</button>
+                        <button class="tab-btn" id="tab-endpoints">Endpoints (11)</button>
+                    </div>
+
+                    <!-- Tab 1: Findings Table -->
+                    <div class="tab-panel active" id="panel-findings">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>SEVERITY</th>
+                                    <th>FINDING</th>
+                                    <th>LOCATION</th>
+                                    <th>VERDICT</th>
+                                </tr>
+                            </thead>
+                            <tbody id="findings-table-body">
+                                <!-- Populated dynamically by app.js -->
+                            </tbody>
+                        </table>
+                        <div class="table-footer" id="findings-table-footer">
+                            Showing 6 of 9. Human review recommended for every finding.
+                        </div>
+                    </div>
+
+                    <!-- Tab 2: Endpoints Table -->
+                    <div class="tab-panel" id="panel-endpoints">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>METHOD</th>
+                                    <th>PATH</th>
+                                    <th>HANDLER</th>
+                                    <th>AUTH STATUS</th>
+                                    <th>OWNERSHIP CHECK</th>
+                                    <th>LOCATION</th>
+                                </tr>
+                            </thead>
+                            <tbody id="endpoints-table-body">
+                                <!-- Populated dynamically by app.js -->
+                            </tbody>
+                        </table>
+                    </div>
+                </main>
+            </div>
+        </section>
+
+        <!-- =========================================================
+             SCREEN 3: Finding Detail View
+             ========================================================= -->
+        <section id="view-detail" class="view">
+            <div class="finding-detail-header">
+                <div class="detail-top-row">
+                    <a class="breadcrumb-back" id="btn-back-dashboard">
+                        <span>← Findings / </span><span id="detail-breadcrumb-id">F-02</span>
+                    </a>
+                    <div class="detail-project-tag" id="detail-header-project">TaskBoard · Score 34/100</div>
+                </div>
+
+                <div class="detail-title-row">
+                    <h2 class="detail-title" id="detail-title">SQL injection risk in login query</h2>
+                    <span class="pill-badge critical" id="detail-severity-badge">Critical</span>
+                    <span class="pill-badge confirmed" id="detail-verdict-badge">Confirmed</span>
+                    <span class="pill-badge" style="background:#f1f5f9; color:#475569;" id="detail-owasp-badge">OWASP
+                        A03 Injection</span>
+                </div>
+            </div>
+
+            <div class="detail-grid">
+                <!-- Left Column -->
+                <div>
+                    <div class="detail-card">
+                        <div class="detail-card-title">
+                            <span>Evidence · </span><span id="detail-file-location">app.py</span>
+                        </div>
+                        <div class="code-display" id="detail-code-display">
+                            <!-- Code snippet with line numbers and highlighting -->
+                        </div>
+                    </div>
+
+                    <div class="detail-card">
+                        <div class="detail-card-title">Why it matters</div>
+                        <div class="detail-text" id="detail-why-matters">
+                            User input is placed directly into the query text. Someone could change what the query does
+                            and read or alter data they should not reach, such as other users’ accounts.
+                        </div>
+                    </div>
+
+                    <div class="detail-card">
+                        <div class="detail-card-title">How the severity was set</div>
+                        <div class="detail-formula-box" id="detail-severity-math">
+                            Severity 5 × confidence high (1.0) = risk 5.0 → Critical
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div>
+                    <div class="detail-card">
+                        <div class="detail-card-title">Suggested fix</div>
+
+                        <div class="fix-label">BEFORE</div>
+                        <div class="fix-box" id="detail-fix-before">q = "SELECT * FROM users WHERE name='" + name + "'"
+                        </div>
+
+                        <div class="fix-label">AFTER</div>
+                        <div class="fix-box after-box" id="detail-fix-after">db.execute("SELECT * FROM users WHERE name
+                            = ?", (name,))</div>
+
+                        <div class="detail-text" id="detail-fix-steps-wrap" style="margin-top: 0.75rem;">
+                            <div class="fix-label">STEPS</div>
+                            <ol id="detail-fix-steps"
+                                style="padding-left: 1.25rem; font-size: 0.85rem; color: var(--text-secondary);"></ol>
+                        </div>
+
+                        <div class="fix-actions">
+                            <button class="btn btn-primary" id="btn-copy-fix">
+                                <span id="copy-btn-text">Copy fix</span>
+                            </button>
+                            <button class="btn btn-outline" id="btn-mark-reviewed">
+                                <span id="review-btn-text">Mark reviewed</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="notice-banner">
+                        <span>⚠️</span>
+                        <span>Human review recommended. AI suggestions can be wrong. Check the fix before applying
+                            it.</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal: How is this scored? -->
+    <div class="modal-overlay" id="modal-score">
+        <div class="modal-card">
+            <button class="modal-close" id="btn-close-score-modal">&times;</button>
+            <h3 class="modal-title">How is this scored?</h3>
+            <div style="font-size: 0.95rem; color: var(--text-secondary); line-height: 1.6;">
+                <p style="margin-bottom: 0.75rem;">
+                    VibeAudit evaluates risk deterministically so results are explainable, objective, and reproducible.
+                </p>
+                <div
+                    style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:1rem; margin-bottom:1rem; font-family:monospace; font-size:0.875rem;">
+                    Risk = Severity (1–5) × Confidence (0.4 | 0.7 | 1.0)<br>
+                    Penalty per finding = Risk × 3<br>
+                    Needs-validation findings count at 50% penalty.<br>
+                    Rejected findings count at 0% penalty.<br>
+                    <strong>Security score = max(0, 100 - sum of penalties)</strong>
+                </div>
+                <div style="margin-bottom: 0.75rem;">
+                    <strong>Risk bands:</strong>
+                    <ul style="padding-left: 1.25rem; margin-top: 0.35rem;">
+                        <li><strong>Critical:</strong> Risk ≥ 4.0</li>
+                        <li><strong>High:</strong> Risk ≥ 3.0</li>
+                        <li><strong>Medium:</strong> Risk ≥ 2.0</li>
+                        <li><strong>Low:</strong> Risk &lt; 2.0</li>
+                    </ul>
+                </div>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">
+                    <em>Verdict and scoring inspired by Cloudflare's open-source security-audit-skill (MIT).</em>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Re-scan Flow & Comparison -->
+    <div class="modal-overlay" id="modal-rescan">
+        <div class="modal-card">
+            <button class="modal-close" id="btn-close-rescan-modal">&times;</button>
+            <h3 class="modal-title">Re-scan Patched Application</h3>
+            <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1.25rem;">
+                Upload the updated project ZIP or select the patched TaskBoard to verify fixes and measure score
+                improvement.
+            </p>
+
+            <div id="rescan-upload-section">
+                <button type="button" class="btn btn-primary btn-full" id="btn-run-rescan-sample"
+                    style="margin-bottom: 0.75rem;">
+                    🚀 Quick Re-scan: Load TaskBoard (Fixed & Hardened)
+                </button>
+                <div style="text-align: center; color: var(--text-muted); font-size: 0.8rem; margin: 0.5rem 0;">or local
+                    folder path:</div>
+                <input type="text" id="rescan-folder-input" class="form-input"
+                    placeholder="e.g. C:\path\to\fixed-project" style="margin-bottom: 0.75rem;">
+                <div style="text-align: center; color: var(--text-muted); font-size: 0.8rem; margin: 0.5rem 0;">or
+                    upload a patched ZIP:</div>
+                <input type="file" id="rescan-file-input" accept=".zip" class="form-input" style="margin-bottom: 1rem;">
+                <button type="button" class="btn btn-outline btn-full" id="btn-run-rescan-file">Upload &
+                    Re-scan</button>
+            </div>
+
+            <div id="rescan-results-section" style="display: none; margin-top: 1.5rem;">
+                <div
+                    style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:1.25rem; margin-bottom:1rem; text-align:center;">
+                    <div style="font-size: 0.85rem; font-weight:700; color:#15803d; text-transform:uppercase;">Score
+                        Improvement</div>
+                    <div style="font-size: 2.2rem; font-weight:800; color:#15803d; margin: 0.25rem 0;"
+                        id="rescan-score-delta">+54 pts</div>
+                    <div style="font-size: 0.95rem; color:#166534;" id="rescan-score-comparison">34 → 88 / 100</div>
+                </div>
+
+                <div style="margin-bottom: 0.75rem; font-weight: 700; font-size: 0.9rem;">Resolved Findings:</div>
+                <ul id="rescan-resolved-list"
+                    style="padding-left: 1.25rem; font-size: 0.85rem; color: #166534; line-height: 1.7;"></ul>
+
+                <button class="btn btn-primary btn-full" id="btn-apply-rescan" style="margin-top: 1.25rem;">View Updated
+                    Dashboard</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Live Localhost Check (FR-12, C11, C12) -->
+    <div class="modal-overlay" id="modal-live">
+        <div class="modal-card">
+            <button class="modal-close" id="btn-close-live-modal">&times;</button>
+            <h3 class="modal-title">Localhost Security Headers & CORS</h3>
+            <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                Non-destructive passive HEAD/GET check. Restricted strictly to <code>localhost</code> and
+                <code>127.0.0.1</code>.
+            </p>
+
+            <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                <input type="text" id="live-target-input" class="form-input" value="http://127.0.0.1:5000">
+                <button class="btn btn-primary" id="btn-execute-live">Check</button>
+            </div>
+
+            <div id="live-results-area" style="font-size: 0.85rem;">
+                <div style="color: var(--text-muted);">Enter local target URL and click Check.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Dropdown Menu -->
+    <div id="export-menu"
+        style="display: none; position: absolute; background:#ffffff; border:1px solid #e2e8f0; border-radius:6px; box-shadow:0 4px 12px rgba(0,0,0,0.1); z-index:100; min-width:180px;">
+        <a id="export-html-btn"
+            style="display:block; padding:0.6rem 1rem; color:#0f172a; text-decoration:none; font-size:0.875rem; cursor:pointer;"
+            hover="background:#f8fafc">
+            📄 Download HTML Report
+        </a>
+        <a id="export-md-btn"
+            style="display:block; padding:0.6rem 1rem; color:#0f172a; text-decoration:none; font-size:0.875rem; cursor:pointer; border-top:1px solid #f1f5f9;">
+            📝 Download Markdown (.md)
+        </a>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TaskBoard Details</title>
+</head>
+<body>
+    <h1>Task Comments</h1>
+    <div class="comment-box">
+        <!-- Flaw C3: Comment text rendered with |safe -->
+        <p>{{ comment | safe }}</p>
+    </div>
+</body>
+</html>
