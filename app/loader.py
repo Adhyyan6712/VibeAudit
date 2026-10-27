@@ -120,3 +120,41 @@ def load_folder(root: str) -> tuple[list[SourceFile], list[str]]:
             if text is not None:
                 files.append(SourceFile(rel, text))
     return files, [f"Scanned {len(files)} files from folder."]
+
+
+def is_github_url(url: str) -> bool:
+    if not url or not isinstance(url, str):
+        return False
+    return "github.com/" in url.lower()
+
+
+def load_github_repo(url: str) -> tuple[list[SourceFile], list[str]]:
+    """Download and unpack a public GitHub repository zipball."""
+    import re
+    import httpx
+    m = re.search(r"github\.com/([^/]+)/([^/]+?)(?:\.git|/.*)?$", url.strip())
+    if not m:
+        raise ValueError("Invalid GitHub repository URL. Expected format: https://github.com/owner/repo")
+    owner, repo = m.group(1), m.group(2)
+    urls_to_try = [
+        f"https://github.com/{owner}/{repo}/archive/refs/heads/main.zip",
+        f"https://github.com/{owner}/{repo}/archive/refs/heads/master.zip",
+        f"https://api.github.com/repos/{owner}/{repo}/zipball",
+    ]
+    headers = {"User-Agent": "VibeAudit-Auditor/1.0"}
+    with httpx.Client(follow_redirects=True, timeout=25.0) as client:
+        resp = None
+        for u in urls_to_try:
+            try:
+                r = client.get(u, headers=headers)
+                if r.status_code == 200 and len(r.content) > 100:
+                    resp = r
+                    break
+            except Exception:
+                continue
+        if not resp:
+            raise ValueError(f"Could not download repository archive for {owner}/{repo}. Ensure repository is public and branch is main/master.")
+        files, notes = load_zip(resp.content)
+        notes.insert(0, f"Successfully loaded GitHub repository: {owner}/{repo}")
+        return files, notes
+

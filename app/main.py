@@ -16,8 +16,9 @@ from fastapi.staticfiles import StaticFiles
 
 from . import __version__, config, gemini_client, report
 from .live_checks import run_live_checks, validate_target
-from .loader import SourceFile, load_dict, load_folder, load_zip
+from .loader import SourceFile, is_github_url, load_dict, load_folder, load_github_repo, load_zip
 from .models import Comparison, FindingPatch, PasteScanRequest, ScanResult
+
 
 from .rules import CHECKS
 from .scanner import assign_ids, run_static_scan
@@ -133,12 +134,29 @@ async def scan_zip(
     if not consent:
         raise HTTPException(400, CONSENT_ERROR)
 
-    target_live = live_url or website_url
+    # Check if target is a GitHub repo URL (e.g. https://github.com/owner/repo)
+    gh_target = None
+    if website_url and is_github_url(website_url):
+        gh_target = website_url.strip()
+    elif folder_path and is_github_url(folder_path):
+        gh_target = folder_path.strip()
+
+    if gh_target:
+        try:
+            files_loaded, notes = await run_in_threadpool(load_github_repo, gh_target)
+            if project_name == "project":
+                project_name = gh_target.split("github.com/")[-1].replace(".git", "").strip("/")
+            return await _run_scan(files_loaded, notes, project_name, use_gemini, None)
+        except ValueError as exc:
+            raise HTTPException(400, str(exc)) from exc
+
+    target_live = live_url or (website_url if (website_url and not is_github_url(website_url)) else None)
     if live_url:
         try:
             validate_target(live_url)
         except ValueError as exc:
             raise HTTPException(400, str(exc)) from exc
+
 
 
     if file and file.filename:
