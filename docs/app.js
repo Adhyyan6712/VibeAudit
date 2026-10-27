@@ -447,9 +447,10 @@ btnStartScan.addEventListener("click", (e) => {
 
 // Render Dashboard
 function renderDashboard(scan) {
-    const score = scan.score_details.score;
+    const score = scan.score_details ? scan.score_details.score : (scan.score !== undefined ? scan.score : 0);
+    const label = scan.score_details ? scan.score_details.label : (scan.rating || "Score");
     scoreDisplay.textContent = score;
-    scoreLabelDisplay.textContent = `Security score: ${scan.score_details.label}`;
+    scoreLabelDisplay.textContent = `Security score: ${label}`;
 
     // Update circular gauge
     const circumference = 2 * Math.PI * 42; // ~263.89
@@ -468,11 +469,17 @@ function renderDashboard(scan) {
     }
 
     // Counts
-    const counts = scan.score_details.severity_counts;
+    const counts = (scan.score_details && scan.score_details.severity_counts) ? scan.score_details.severity_counts : {
+        critical: (scan.counts ? (scan.counts.Critical ?? scan.counts.critical ?? 0) : 0),
+        high: (scan.counts ? (scan.counts.High ?? scan.counts.high ?? 0) : 0),
+        medium: (scan.counts ? (scan.counts.Medium ?? scan.counts.medium ?? 0) : 0),
+        low: (scan.counts ? (scan.counts.Low ?? scan.counts.low ?? 0) : 0)
+    };
     countCritical.textContent = counts.critical;
     countHigh.textContent = counts.high;
     countMedium.textContent = counts.medium;
     countLow.textContent = counts.low;
+
 
     // Tab buttons text
     tabFindings.textContent = `Findings (${scan.findings.length})`;
@@ -548,8 +555,10 @@ function openFindingDetail(finding) {
     currentFinding = finding;
 
     detailBreadcrumbId.textContent = finding.id;
-    detailHeaderProject.textContent = `${currentScan.project_name} · Score ${currentScan.score_details.score}/100`;
+    const curScore = currentScan.score_details ? currentScan.score_details.score : (currentScan.score !== undefined ? currentScan.score : 0);
+    detailHeaderProject.textContent = `${currentScan.project_name} · Score ${curScore}/100`;
     detailTitle.textContent = finding.title;
+
 
     // Badges
     detailSeverityBadge.className = `pill-badge ${finding.band.toLowerCase()}`;

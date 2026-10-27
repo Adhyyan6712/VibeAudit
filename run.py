@@ -17,5 +17,5 @@ if __name__ == "__main__":
             pass
     port = int(os.environ.get("PORT", 8000))
     host = os.environ.get("HOST", "127.0.0.1")
-    print(f"Starting VibeAudit at http://{host}:{port}")
-    uvicorn.run("backend.app:app", host=host, port=port, reload=True)
+    uvicorn.run("app.main:app", host=host, port=port, reload=True)
+

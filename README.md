@@ -4,8 +4,9 @@
 Built for Tech Yuva × GDG Gurugram Build-A-Thon 2026 (Problem Statement PS-12).
 
 [![GitHub Repo](https://img.shields.io/badge/GitHub-Adhyyan6712%2FVibeAudit-blue?logo=github)](https://github.com/Adhyyan6712/VibeAudit)
-[![Tests Passing](https://img.shields.io/badge/Tests-26%2F26%20Passed-brightgreen)](https://github.com/Adhyyan6712/VibeAudit)
+[![Tests Passing](https://img.shields.io/badge/Tests-38%2F38%20Passed-brightgreen)](https://github.com/Adhyyan6712/VibeAudit)
 [![Gemini AI](https://img.shields.io/badge/Powered%20By-Google%20Gemini%202.5-orange?logo=google)](https://aistudio.google.com/)
+
 
 ---
 
