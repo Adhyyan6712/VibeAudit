@@ -221,9 +221,22 @@ def patch_finding(scan_id: str, finding_id: str, patch: FindingPatch):
     return scan
 
 
-@app.post("/findings/{scan_id}/{finding_id}/verdict", response_model=ScanResult)
+@app.post("/findings/{scan_id}/{finding_id}/verdict")
 def post_finding_verdict(scan_id: str, finding_id: str, verdict: str = Form(...), verdict_reason: str = Form("")):
-    return patch_finding(scan_id, finding_id, FindingPatch(verdict=verdict, verdict_reason=verdict_reason, reviewed=True))
+    scan = _get(scan_id)
+    f = next((x for x in scan.findings if x.id == finding_id), None)
+    if not f:
+        raise HTTPException(404, "Finding not found.")
+    f.verdict, f.user_override = verdict, True
+    f.verdict_reason = verdict_reason or "Verdict set by a human reviewer."
+    f.reviewed = True
+    finalize(scan)
+    return {
+        "status": "ok",
+        "finding": f,
+        "score_details": scan.score_details,
+        "scan": scan
+    }
 
 
 @app.get("/findings/{scan_id}")
@@ -232,30 +245,82 @@ def get_findings_list(scan_id: str):
 
 
 @app.post("/rescan", response_model=ScanResult)
-async def rescan(previous_scan_id: str = Form(...), file: UploadFile | None = File(None), consent: bool = Form(False),
-                 use_gemini: bool = Form(True), sample_id: str | None = Form(None)):
+async def rescan(
+    previous_scan_id: str | None = Form(None),
+    old_scan_id: str | None = Form(None),
+    file: UploadFile | None = File(None),
+    consent: bool = Form(False),
+    use_gemini: bool = Form(True),
+    sample_id: str | None = Form(None),
+    folder_path: str | None = Form(None),
+):
     """Scan a patched version and compare it with a previous scan (the before/after demo moment)."""
     if not consent:
         raise HTTPException(400, CONSENT_ERROR)
-    old = _get(previous_scan_id)
+    prev_id = previous_scan_id or old_scan_id
+    if not prev_id:
+        raise HTTPException(400, "Missing previous scan ID for comparison.")
+    old = _get(prev_id)
+
     if file and file.filename:
         try:
             files, notes = await run_in_threadpool(load_zip, await _read_upload(file))
         except ValueError as exc:
             raise HTTPException(400, str(exc)) from exc
+    elif folder_path and folder_path.strip():
+        files, notes = await run_in_threadpool(load_folder, folder_path.strip().strip('"').strip("'"))
     else:
         base = Path(__file__).resolve().parent.parent / "demo" / "taskboard_fixed"
         files, notes = await run_in_threadpool(load_folder, str(base))
+
     new = await _run_scan(files, notes, old.project_name, use_gemini, None)
     old_fp = {f.fingerprint: f for f in old.findings if f.source == "static" and f.verdict != "rejected"}
     new_fp = {f.fingerprint: f for f in new.findings if f.verdict != "rejected"}
+    resolved = [f for k, f in old_fp.items() if k not in new_fp]
+    new_findings = [f for k, f in new_fp.items() if k not in old_fp]
+    unchanged_cnt = len(set(old_fp) & set(new_fp))
+    delta = new.score - old.score
+
     new.comparison = Comparison(
-        previous_scan_id=old.scan_id, old_score=old.score, new_score=new.score, delta=new.score - old.score,
-        resolved=[f for k, f in old_fp.items() if k not in new_fp],
-        new=[f for k, f in new_fp.items() if k not in old_fp],
-        unchanged_count=len(set(old_fp) & set(new_fp)))
+        previous_scan_id=old.scan_id, old_score=old.score, new_score=new.score, delta=delta,
+        resolved=resolved, new=new_findings, unchanged_count=unchanged_cnt
+    )
+    new.score_delta = delta
+    new.old_score = old.score
+    new.new_score = new.score
+    new.resolved_findings = resolved
+    new.new_scan_id = new.scan_id
     return new
 
+
+@app.post("/live-check")
+def live_check_route(payload: dict):
+    from backend.live_scanner import scan_live_localhost
+    target = payload.get("target_url", "http://127.0.0.1:5000")
+    return scan_live_localhost(target)
+
+
+def _zip_directory(dir_path: Path) -> bytes:
+    import io
+    import zipfile
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        for p in dir_path.rglob("*"):
+            if p.is_file():
+                zf.write(p, p.relative_to(dir_path))
+    return buf.getvalue()
+
+
+@app.get("/demo/{name}.zip")
+def get_demo_zip(name: str):
+    root = Path(__file__).resolve().parent.parent
+    clean = name.lower()
+    target_dir = root / "demo" / ("taskboard_fixed" if "fixed" in clean else "taskboard")
+    if not target_dir.is_dir():
+        raise HTTPException(404, "Demo directory not found")
+    data = _zip_directory(target_dir)
+    return Response(content=data, media_type="application/zip",
+                    headers={"Content-Disposition": f'attachment; filename="{name}.zip"'})
 
 
 @app.get("/report/{scan_id}")
@@ -273,5 +338,7 @@ def get_report(scan_id: str, format: str = "md", download: bool = False):
     return Response(body, media_type=media, headers=headers)
 
 
-if config.FRONTEND_DIR.is_dir():          # optional: serve the UI from the same server
+if config.FRONTEND_DIR.is_dir():          # serve the UI from static and root
+    app.mount("/static", StaticFiles(directory=config.FRONTEND_DIR), name="static")
     app.mount("/", StaticFiles(directory=config.FRONTEND_DIR, html=True), name="ui")
+

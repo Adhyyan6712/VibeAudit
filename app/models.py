@@ -92,6 +92,11 @@ class ScanResult(BaseModel):
     rating: str = "Good"
     counts: Counts = Field(default_factory=Counts)
     score_details: Optional[ScoreDetails] = None
+    score_delta: int = 0
+    old_score: int = 0
+    new_score: int = 0
+    resolved_findings: list[Finding] = Field(default_factory=list)
+    new_scan_id: str = ""
     findings: list[Finding] = Field(default_factory=list)
     endpoints: list[Endpoint] = Field(default_factory=list)
     formula: str = ""
@@ -99,6 +104,7 @@ class ScanResult(BaseModel):
     live_checked: Optional[str] = None
     ai_status: str = "disabled"
     comparison: Optional[Comparison] = None
+
 
 
 

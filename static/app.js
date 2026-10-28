@@ -480,7 +480,6 @@ function renderDashboard(scan) {
     countMedium.textContent = counts.medium;
     countLow.textContent = counts.low;
 
-
     // Tab buttons text
     tabFindings.textContent = `Findings (${scan.findings.length})`;
     tabEndpoints.textContent = `Endpoints (${scan.endpoints.length})`;
@@ -558,7 +557,6 @@ function openFindingDetail(finding) {
     const curScore = currentScan.score_details ? currentScan.score_details.score : (currentScan.score !== undefined ? currentScan.score : 0);
     detailHeaderProject.textContent = `${currentScan.project_name} · Score ${curScore}/100`;
     detailTitle.textContent = finding.title;
-
 
     // Badges
     detailSeverityBadge.className = `pill-badge ${finding.band.toLowerCase()}`;
